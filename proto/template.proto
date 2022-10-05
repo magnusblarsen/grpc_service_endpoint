@@ -1,0 +1,17 @@
+syntax = "proto3";
+option go_package = "https://github.com/magnusblarsen/grpc_service_endpoint/proto";
+package proto;
+
+service MyService
+{
+    rpc SayHi (stream Greeting)returns (Farewell);
+}
+
+message Greeting {
+    string clientname = 1;
+    string message = 2;
+}
+
+message Farewell {
+    string message = 1;
+}
