@@ -1,4 +1,4 @@
-module magnusblarsen/grpc_service_endpoint.git
+module github.com/magnusblarsen/grpc_service_endpoint
 
 go 1.19
 
