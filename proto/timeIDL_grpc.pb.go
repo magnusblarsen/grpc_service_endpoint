@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.6.1
-// source: proto/template.proto
+// source: proto/timeIDL.proto
 
 package proto
 
@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MyServiceClient interface {
-	SayHi(ctx context.Context, opts ...grpc.CallOption) (MyService_SayHiClient, error)
+	TellTime(ctx context.Context, in *Info, opts ...grpc.CallOption) (*Time, error)
 }
 
 type myServiceClient struct {
@@ -33,45 +33,20 @@ func NewMyServiceClient(cc grpc.ClientConnInterface) MyServiceClient {
 	return &myServiceClient{cc}
 }
 
-func (c *myServiceClient) SayHi(ctx context.Context, opts ...grpc.CallOption) (MyService_SayHiClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MyService_ServiceDesc.Streams[0], "/proto.MyService/SayHi", opts...)
+func (c *myServiceClient) TellTime(ctx context.Context, in *Info, opts ...grpc.CallOption) (*Time, error) {
+	out := new(Time)
+	err := c.cc.Invoke(ctx, "/proto.MyService/TellTime", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &myServiceSayHiClient{stream}
-	return x, nil
-}
-
-type MyService_SayHiClient interface {
-	Send(*Greeting) error
-	CloseAndRecv() (*Farewell, error)
-	grpc.ClientStream
-}
-
-type myServiceSayHiClient struct {
-	grpc.ClientStream
-}
-
-func (x *myServiceSayHiClient) Send(m *Greeting) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *myServiceSayHiClient) CloseAndRecv() (*Farewell, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(Farewell)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // MyServiceServer is the server API for MyService service.
 // All implementations must embed UnimplementedMyServiceServer
 // for forward compatibility
 type MyServiceServer interface {
-	SayHi(MyService_SayHiServer) error
+	TellTime(context.Context, *Info) (*Time, error)
 	mustEmbedUnimplementedMyServiceServer()
 }
 
@@ -79,8 +54,8 @@ type MyServiceServer interface {
 type UnimplementedMyServiceServer struct {
 }
 
-func (UnimplementedMyServiceServer) SayHi(MyService_SayHiServer) error {
-	return status.Errorf(codes.Unimplemented, "method SayHi not implemented")
+func (UnimplementedMyServiceServer) TellTime(context.Context, *Info) (*Time, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TellTime not implemented")
 }
 func (UnimplementedMyServiceServer) mustEmbedUnimplementedMyServiceServer() {}
 
@@ -95,30 +70,22 @@ func RegisterMyServiceServer(s grpc.ServiceRegistrar, srv MyServiceServer) {
 	s.RegisterService(&MyService_ServiceDesc, srv)
 }
 
-func _MyService_SayHi_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MyServiceServer).SayHi(&myServiceSayHiServer{stream})
-}
-
-type MyService_SayHiServer interface {
-	SendAndClose(*Farewell) error
-	Recv() (*Greeting, error)
-	grpc.ServerStream
-}
-
-type myServiceSayHiServer struct {
-	grpc.ServerStream
-}
-
-func (x *myServiceSayHiServer) SendAndClose(m *Farewell) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *myServiceSayHiServer) Recv() (*Greeting, error) {
-	m := new(Greeting)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _MyService_TellTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Info)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(MyServiceServer).TellTime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.MyService/TellTime",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MyServiceServer).TellTime(ctx, req.(*Info))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 // MyService_ServiceDesc is the grpc.ServiceDesc for MyService service.
@@ -127,13 +94,12 @@ func (x *myServiceSayHiServer) Recv() (*Greeting, error) {
 var MyService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.MyService",
 	HandlerType: (*MyServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
+	Methods: []grpc.MethodDesc{
 		{
-			StreamName:    "SayHi",
-			Handler:       _MyService_SayHi_Handler,
-			ClientStreams: true,
+			MethodName: "TellTime",
+			Handler:    _MyService_TellTime_Handler,
 		},
 	},
-	Metadata: "proto/template.proto",
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/timeIDL.proto",
 }

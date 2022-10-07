@@ -4,14 +4,14 @@ package proto;
 
 service MyService
 {
-    rpc SayHi (stream Greeting)returns (Farewell);
+    rpc TellTime (Info) returns (Time);
 }
 
-message Greeting {
+message Info {
     string clientname = 1;
     string message = 2;
 }
 
-message Farewell {
+message Time {
     string message = 1;
 }
